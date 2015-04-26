@@ -1,3 +1,13 @@
+//  Pollen by Mike Davis
+//  mike [at] lightcycle [dot] org
+
+//  A short program for alife experiments.
+//
+//  Each cell is represented by a pixel on the display as well as an entry in
+//  the Vector 'cells'.  Cells each have a run() method, which performs actions
+//  based on the cell's surroundings.  Cells run one at a time (to avoid conflicts
+//  like wanting to move to the same space) in random order.
+
 package org.lightcycle.alife.pollen;
 
 import java.util.Random;
