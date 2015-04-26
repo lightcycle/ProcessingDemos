@@ -9,6 +9,12 @@ Each cell follows the same rules, attempting to move in a direction determined b
 
 ![Alt text](http://lightcycle.github.io/screenshots/Pollen.png "Pollen Screenshot")
 
+## Valentine 2008
+
+Generative animation for Valentine's Day 2008.  Click to cycle through three scenes: swimming wireframe jellyfish, two solid heart-shaped jellyfish that join tentacles, and jiggling sea grass.  Poem deleted.
+
+![Alt text](http://lightcycle.github.io/screenshots/Valentine2008.png "Valentine 2008 Screenshot")
+
 ## FinFin
 
 Simple swarming behavior towards a food source, with gratuitous water ripple animations.
