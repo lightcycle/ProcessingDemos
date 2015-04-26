@@ -27,9 +27,6 @@
                  the iter parameter, ignore the R.  At the end of the string, if
                  there are positions left on the stack, pop one and go to that
                  position.
-             (   Begin a curve.
-             .   Place a curve vertex.
-             )   End the curve.
  */
 
 package org.lightcycle.generative.treefold;
@@ -42,9 +39,8 @@ public class TreeFold extends PApplet {
 	public static void main(String args[]) {
 		PApplet.main(new String[] { "org.lightcycle.generative.treefold.TreeFold" });
 	}
-	
-	boolean switchexample = false;
-	int num = 1; // number of example structures
+
+	int num = 4; // number of example structures
 	int cur = 0; // index of the currently displayed example
 
 	String[] l_string = new String[num];
@@ -53,54 +49,56 @@ public class TreeFold extends PApplet {
 	Stack<State> states = new Stack<State>();
 
 	// Parameters for interaction with the structure
-
+	float speed = 0.25F; // controls responsiveness of controls, must be between 0
+						// and 1
 	float ta = 0, tb = 0;
-	float a = 0, b = 0;	
+	float a = 0, b = 0;
+
+	boolean changePending = false;
 
 	public void setup() {
-		
-		background(255);
-
-		size(600, 600);
-		stroke(255, 255, 255, 172);
+		size(400, 300);
+		stroke(170, 255, 128);
 		noFill();
 
 		// The definitions of example structures
-		l_string[0] = new String("CF[+R][-R]");
-		l_iter[0] = 8;
+		l_string[0] = new String("[-R]RCC[+R]");
+		l_iter[0] = 6;
+		l_string[1] = new String("FFFF[-CR][+RFFFF]");
+		l_iter[1] = 8;
+		l_string[2] = new String("FCR[-FR]RF");
+		l_iter[2] = 5;
+		l_string[3] = new String("CRC[+R]");
+		l_iter[3] = 8;
 	}
 
 	public void draw() {
-		background(0, 0, 0);
-		
-		// Center
-		translate(width / 2, height / 2);
+		background(64);
 		
 		// Find target parameter settings
-		ta = ((float) mouseX / (float) width - 0.5F) * TWO_PI;
-		tb = ((float) mouseY / (float) height - 0.5F) * TWO_PI;
+		ta = (float) mouseX / width;
+		tb = (float) mouseY / height;
 
 		// Interpolate towards target parameters (for smooth transitions)
-		a += (ta - a) * 0.5;
-		b += (tb - b) * 0.5;
+		a += speed * (ta - a);
+		b += speed * (tb - b);
 
 		// Setup initial drawing state
-		current.x = 0;
-		current.y = 0;
+		current.x = width / 2;
+		current.y = height / 2;
 		current.angle = 0;
-		current.length = 15;
-		current.turn = a * TWO_PI;
-		current.turn2 = current.turn;
+		current.length = 3;
+		current.turn = a * 360;
+		current.length2 = 3;
+		current.turn2 = b * 360 + 180;
 
-		// Process string into a structure
+		// Process string into a structure (see docs for details)
 		Place place = new Place(0);
 		Stack<Place> places = new Stack<Place>();
 		boolean done = false;
 
-		while (!done && place.item < l_string[cur].length()) {
+		while (!done) {
 			switch (l_string[cur].charAt(place.item)) {
-			case 'o':
-				current.turn += TWO_PI / 24F;
 			case '[':
 				State item = new State(current);
 				states.push(item);
@@ -116,45 +114,27 @@ public class TreeFold extends PApplet {
 				current.angle += current.turn;
 				break;
 			case 'f':
-				current.x += current.length * sin((float)current.angle);
-				current.y += current.length * cos((float)current.angle);
+				current.x += current.length * sin(radians(current.angle));
+				current.y += current.length * cos(radians(current.angle));
 				break;
 			case 'F':
 				int ox = (int) current.x;
 				int oy = (int) current.y;
-				current.x += current.length * sin((float)current.angle);
-				current.y += current.length * cos((float)current.angle);
+				current.x += current.length * sin(radians(current.angle));
+				current.y += current.length * cos(radians(current.angle));
 				line(ox, oy, (int) current.x, (int) current.y);
 				break;
 			case 'C':
 				ox = (int) current.x;
 				oy = (int) current.y;
-				
-				current.x += current.length * sin((float)current.angle);
-				current.y += current.length * cos((float)current.angle);
+				current.x += current.length * sin(radians(current.angle));
+				current.y += current.length * cos(radians(current.angle));
 				int ox2 = (int) current.x;
 				int oy2 = (int) current.y;
-				
-				current.angle += current.turn;
-				current.x += current.length * sin((float)current.angle);
-				current.y += current.length * cos((float)current.angle);
-				int ox3 = (int) current.x;
-				int oy3 = (int) current.y;
-				
 				current.angle += current.turn2;
-				current.x += current.length * sin((float)current.angle);
-				current.y += current.length * cos((float)current.angle);
-				bezier(ox, oy, ox2, oy2, ox3, oy3, (int) current.x,
-						(int) current.y);
-				break;
-			case '(':
-				beginShape();
-				break;
-			case '.':
-				curveVertex((float)current.x, (float)current.y);
-				break;
-			case ')':
-				endShape();
+				current.x += current.length2 * sin(radians(current.angle));
+				current.y += current.length2 * cos(radians(current.angle));
+				bezier(ox, oy, ox2, oy2, ox2, oy2, (int) current.x, (int) current.y);
 				break;
 			case 'R':
 				if (places.size() < l_iter[cur]) {
@@ -164,28 +144,26 @@ public class TreeFold extends PApplet {
 				break;
 			}
 			place.item++; // Move to the next command
-			if (place.item >= l_string[cur].length()) // We're at the end of
-														// the string
+			if (place.item >= l_string[cur].length()) // We're at the end of the
+														// string
 			{
 				if (places.empty()) // If the places stack is empty, we're
 									// finished drawing
 					done = true;
 				else // Otherwise, pop from places and jump to that place
 				{
-					place = (Place) places.pop();
+					place = places.pop();
 					place.item++;
 				}
 			}
 		}
-		
-		if (switchexample) {
-			switchexample = false;
-			cur = (cur + 1) % num;
-		}
-	}
 
-	public void mousePressed() {
-		switchexample = true;
+		// Mouse was clicked at some point, now it's safe to change to the next
+		// structure
+		if (changePending) {
+			cur = (cur + 1) % num;
+			changePending = false;
+		}
 	}
 
 	class State {
@@ -198,17 +176,22 @@ public class TreeFold extends PApplet {
 			this.angle = s.angle;
 			this.length = s.length;
 			this.turn = s.turn;
+			this.length2 = s.length2;
 			this.turn2 = s.turn2;
 		}
 
-		double x, y, angle, length, turn, turn2;
-	}
-}
-
-class Place {
-	Place(int a) {
-		item = a;
+		float x, y, angle, length, turn, length2, turn2;
 	}
 
-	int item;
+	class Place {
+		Place(int a) {
+			item = a;
+		}
+
+		int item;
+	}
+
+	public void mousePressed() {
+		changePending = true;
+	}
 }
